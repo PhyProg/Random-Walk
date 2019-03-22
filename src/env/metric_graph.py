@@ -2,10 +2,10 @@ from graph import *
 
 class MetricGraph(Graph):
 
-    def __init__(self, metric: callable):
+    def __init__(self, metric: callable, id_generator = None):
         self.metric = metric
         self.coord_origin = self.metric.coordinate_origin
-        super(MetricGraph, self).__init__()
+        super(MetricGraph, self).__init__(id_generator)
         return
 
     def feed_node_norms(self):

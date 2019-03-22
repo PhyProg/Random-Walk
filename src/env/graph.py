@@ -2,20 +2,24 @@ from node import Node
 from copy import deepcopy
 from random import choice
 
+import numpy as np
+
 import string
 
 class Graph:
 
-    nodes = {}
-    node_ids = []
-
-    def __init__(self):
+    def __init__(self, id_generator = None):
         self.nodes = {}
         self.node_ids = []
+        if id_generator is not None:
+            self.manual_hashing = True
+            self.id_generator = id_generator
+        else:
+            self.manual_hashing = False
         return
 
-    def add_node(self, node: Node):
-        id = self.get_id()
+    def add_node(self, node: Node, coordinates = None):
+        id = self.get_id(coordinates)       
         self.node_ids.append(id)
         self.nodes[id] = deepcopy(node)
         self.nodes[id].node_id = id
@@ -40,10 +44,16 @@ class Graph:
             if first not in self.nodes[second].next_ids:
                 self.nodes[second].next_ids.append(first)
 
-    def get_id(self, size = 30):
-        id = ''.join(choice(string.ascii_uppercase + string.digits) for _ in range(size))
-        while id in self.node_ids:
+    def next(self, current: str):
+        return self.nodes[current].next_ids
+
+    def get_id(self, coordinates = None, size = 30):
+        if self.manual_hashing and type(coordinates) is np.ndarray or list:
+            id = self.id_generator(coordinates)
+        else:
             id = ''.join(choice(string.ascii_uppercase + string.digits) for _ in range(size))
+            while id in self.node_ids:
+                id = ''.join(choice(string.ascii_uppercase + string.digits) for _ in range(size))
         return id
 
     def __str__(self):
@@ -52,6 +62,8 @@ class Graph:
     def graph_data(self):
         temp = "Number of nodes: " + str(len(self.node_ids))
         yield temp 
+        temp = "Manual hashing: " + str(self.manual_hashing)
+        yield temp
         temp = "Node Ids:" 
         yield temp 
         for node_id in self.node_ids:

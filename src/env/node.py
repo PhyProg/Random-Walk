@@ -1,14 +1,10 @@
 class Node:
 
-    #id of node in graph
-    node_id = None
-    #Nodes available to go from current node
-    next_ids = []
-    #Nodes for which current node is available
-    prev_ids = []
-
     #Initialization. 
     def __init__(self, **kwargs):
+        self.node_id = None 
+        self.next_ids = []
+        self.prev_ids = []
         self.add_arguments(**kwargs)
 
     def metric_args(self):
