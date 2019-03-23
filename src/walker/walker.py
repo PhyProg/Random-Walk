@@ -2,12 +2,14 @@ from random import choice
 
 class Walker:
 
-    def __init__(self, is_processing_data = False, 
-                    data_processors = [],
-                    keys_to_collect = [],
-                    is_processor_same_for_all_data = False):
+    def __init__(self, initial_id: str,
+                is_processing_data = False, 
+                data_processors = [],
+                keys_to_collect = [],
+                is_processor_same_for_all_data = False):
         
         self.reset()
+        self.visited.append(initial_id)
         self.is_processing_data = is_processing_data
         self.keys_to_collect = keys_to_collect
         self.is_processor_same_for_all_data = is_processor_same_for_all_data
@@ -18,6 +20,9 @@ class Walker:
 
         for key in self.keys_to_collect:
             self.data[key] = []
+
+    def current_position(self):
+        return self.visited[-1]
 
     def return_results(self, keys = []):
         ret = []
@@ -38,12 +43,10 @@ class Walker:
         self.data_processors = []
         self.keys_to_collect = []
 
-    def next(self, possible_states):
-        return choice(possible_states)
-
-    def walk(self, next_pos_id):
+    def walk(self, possible_states: list):
+        next = choice(possible_states)
         self.step += 1
-        self.visited.append(next_pos_id)
+        self.visited.append(next)
 
     def collect_data(self, node = None, data_dict = None):
         if node is not None:

@@ -33,8 +33,8 @@ class LightGrid:
                     self.bounds[str(self.bounded_indices[i])] = kwargs['bounds'][i]
                 kwargs.pop('bounds')
         
-        self.__dict__['wormholes'] = {}
-        self.__dict__['blackholes'] = []
+        self.wormholes = {}
+        self.blackholes = []
 
         if 'wormholes' in kwargs.keys():
             for wormhole in kwargs['wormholes']:
@@ -46,8 +46,19 @@ class LightGrid:
                 self.add_blackhole(blackhole)
             kwargs.pop('blackholes')
 
+        self.processors = {}
+
+        if 'processors' in kwargs.keys():
+            for processor in kwargs['processors']:
+                if processor is callable and 'name' in processor.__dict__:
+                    self.add_processor(processor, processor.name)
+            kwargs.pop('processors')
+
         for key in kwargs.keys():
             self.__dict__[key] = kwargs[key]
+
+    def add_processor(self, processor: callable, name: str):
+        self.processors[name] = processor
 
     def add_blackhole(self, hole):
         try:
