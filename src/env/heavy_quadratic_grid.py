@@ -90,7 +90,7 @@ def get_quadratic_grid_dd(bounds: list, dr = None):
     dim = len(bounds)
     if dr is None:
         dr = np.ones(dim, dtype = np.int64)
-    coords = [np.arange(bounds[i][0], bounds[i][1] + dr[i]) for i in range(dim)]
+    coords = [np.arange(bounds[i][0], bounds[i][1], dr[i]) for i in range(dim)]
 
     coord_origin = np.zeros(dim, dtype = np.int64)
     generator = HashGenerator(max_coord = np.max([np.max(coords[i]) for i in range(dim)]))
