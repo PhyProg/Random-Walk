@@ -1,6 +1,11 @@
-from walker import Walker
+import sys
+
+sys.path.append("../../")
+
+from model.diffusion.walker import Walker
 
 import numpy as np
+import math
 
 class Diffusion:
 
@@ -11,9 +16,9 @@ class Diffusion:
             self.bounds.append((0,g))
 
         self.grid_dim = len(grid_size)
-        self.no_of_particles = no_of_particles
+        self.no_of_particles = np.int64(no_of_particles)
         self.start_coordinates = np.zeros((self.no_of_particles, self.grid_dim), dtype = np.int32)
-        self.walkers_run_data = 0
+        self.walkers_run_data = np.zeros((self.no_of_particles, len(self.grid_size), 1))
 
     def initialize_coordinates(self, axis, coordinates: (list, np.ndarray)):
         coordinates = np.array(coordinates)
@@ -27,7 +32,9 @@ class Diffusion:
             self.start_coordinates[i][axis] = coordinates[i]
 
     def run(self, no_of_steps):
+        no_of_steps = np.int64(no_of_steps)
         self.walkers_run_data = np.zeros((self.no_of_particles, len(self.grid_size), no_of_steps + 1))
+        
         for i in range(self.no_of_particles):
 
             wlk = Walker(no_of_steps = no_of_steps, \
@@ -39,7 +46,7 @@ class Diffusion:
             self.walkers_run_data[i] = wlk.get_evolution()
 
     def density(self, time: int, cell_size = None):
-        """if cell_size is None:
+        if cell_size is None:
             cell_size = np.ones(self.grid_dim)
         elif cell_size is list:
             if len(cell_size) == self.grid_dim:
@@ -48,18 +55,26 @@ class Diffusion:
                 cell_size = np.ones(self.grid_dim)
         elif type(cell_size) is np.ndarray:
             if cell_size.shape[0] != self.grid_dim:
-                cell_size = np.ones(self.grid_dim)"""
+                cell_size = np.ones(self.grid_dim)
 
-        grid = [np.linspace(0, self.grid_size[i], self.grid_size[i], dtype = np.int) for i in range(self.grid_dim)]
+        density = np.zeros((tuple(np.int(self.grid_size[i] / cell_size[i]) for i in range(self.grid_dim))), dtype = np.int) \
+                #for i in range(self.grid_dim)]
 
-        bounds = [(0, self.grid_size[i]) for i in range(self.grid_dim)]
+        for i in range(self.no_of_particles):
+            coords = self.embedd(self.walkers_run_data[i,:,time], cell_size)
+            density[tuple(coords)] += 1
 
-        for i in range(np.prod([grid[j].shape[0] for j in range(self.grid_dim)])):
-            curr = [el(grid, i, j) for j in range(self.grid_dim)]
-            temp_coords = np.array([grid[j][curr[j]] for j in range(self.grid_dim)])
-            for ar in around_dd(temp_coords, bounds):
-                print(curr, ar)
-                
+        return density
+
+    def embedd(self, coordinates, cell_size):
+        ret = []
+        for i in range(self.grid_dim):
+            _, c = math.modf(coordinates[i] / cell_size[i])
+            ret.append(int(c))
+        return ret
+
+    def get_run_data(self, time):
+        return self.walkers_run_data[:,:,time]
 
 def around_dd(coord, bounds, dr = None):
     dim = coord.shape[0]
@@ -92,7 +107,11 @@ if __name__ == "__main__":
 
     dif = Diffusion(grid_size=(100, 100), no_of_particles=100)
 
-    dif.run(no_of_steps=5)
+    dif.run(no_of_steps=10)
 
-    print(dif.density(time=0))
+    dns = dif.density(10, cell_size=[3,3])
+
+    print(dns)
+    print(dns.shape)
+    print(np.sum(dns))
 
