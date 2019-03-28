@@ -28,11 +28,12 @@ class LightGrid:
                             for id in idx[0]:
                                 self.bounded[id] = True
                 else:
-                    self.bounded.extend(True for bound in kwargs['bounds'])
+                    self.bounded.extend(not bound is None for bound in kwargs['bounds'])
                     self.bounded.extend(False for i in range(dim - len(self.bounded))) 
+                    self.bounded_indices = np.where(np.array(self.bounded) > 0)[0]
                 self.bounds = {}
                 for i in range(self.bounded_indices.shape[0]):
-                    self.bounds[str(self.bounded_indices[i])] = kwargs['bounds'][i]
+                    self.bounds[str(self.bounded_indices[i])] = kwargs['bounds'][self.bounded_indices[i]]
                 kwargs.pop('bounds')
         
         self.wormholes = {}
@@ -75,17 +76,22 @@ class LightGrid:
         except: ValueError
         if str(first) not in self.wormholes.keys():
             self.wormholes[str(first)] = []
-        self.wormholes[str(first)].append(second)
+        if not self._is_array_in_list(second, self.wormholes[str(first)]):
+            self.wormholes[str(first)].append(second)
         if not one_way:
             if str(second) not in self.wormholes.keys():
                 self.wormholes[str(second)] = []
-            self.wormholes[str(second)].append(first)
+            if not self._is_array_in_list(first, self.wormholes[str(second)]):
+                self.wormholes[str(second)].append(first)
 
-    def next(self, current: np.ndarray):
+    def _is_array_in_list(self, my_array: np.ndarray, lst: list):
+        return next((True for arr in lst if np.array_equal(arr, my_array)), False)
+
+    def _next(self, current: np.ndarray, is_out_of_wormhole = True):
         possible_pos = []
         if str(current) in self.blackholes:
             return [current]
-        if str(current) in self.wormholes.keys():
+        if str(current) in self.wormholes.keys() and not is_out_of_wormhole:
             return self.wormholes[str(current)]
         for i in range(self.dim):
             ddr = np.zeros(self.dim)

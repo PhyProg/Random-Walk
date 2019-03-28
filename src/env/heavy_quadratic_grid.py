@@ -103,11 +103,15 @@ def get_quadratic_grid_dd(bounds: list, dr = None):
     
     graph = MetricGraph(metric = metric, id_generator = generator)
 
+    #Adding nodes
+
     for i in range(np.prod([coords[j].shape[0] for j in range(dim)])):
         curr = [el(coords, i, j) for j in range(dim)]
         temp_coords = np.array([coords[j][curr[j]] for j in range(dim)])
         node = Node(coordinates = temp_coords, metric_arg_key = 'coordinates')
         graph.add_node(node, coordinates = temp_coords)
+
+    #Adding connections
 
     for i in range(np.prod([coords[j].shape[0] for j in range(dim)])):
         curr = [el(coords, i, j) for j in range(dim)]

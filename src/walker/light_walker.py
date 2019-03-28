@@ -29,8 +29,11 @@ class LightWalker:
         self.step = 0
         self.data = {}
 
-    def get_current_coordinate(self):
+    def get_current_position(self):
         return self.visited[self.step]
+
+    def get_prev_position(self):
+        return self.visited[self.step - 1]
 
     def walk(self, possible_states: list, **kwargs):
         if not self.terminated:
