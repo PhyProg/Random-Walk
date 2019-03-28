@@ -4,8 +4,10 @@ class LightGrid:
 
     def __init__(self, bounded = False, dr = None, dim = 3, **kwargs):
         self.dim = dim
+
         if dr is None:
             self.dr = np.ones(self.dim, dtype = np.int64)
+
         if bounded:
             if 'bounds' not in kwargs.keys():
                 raise AttributeError("If grid is bounded you need to provide bounds")
@@ -96,3 +98,13 @@ class LightGrid:
                 else:
                     possible_pos.append(temp)
         return possible_pos
+
+    def _data(self, key: str, coordinates: np.ndarray):
+        if key in self.processors.keys():
+            return self.processors[key](coordinates)
+        else:
+            raise KeyError("Key is not processor")
+    
+    def data(self, keys: list, coordinates: np.ndarray):
+        for key in keys:
+            yield self._data(key, coordinates)

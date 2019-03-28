@@ -1,14 +1,19 @@
 from random import choice
 
+def default_choice(possible_states, **kwargs):
+    return choice(possible_states)
+
 class Walker:
 
     def __init__(self, initial_id: str,
+                next_step_processor = default_choice,
                 is_processing_data = False, 
                 data_processors = [],
                 keys_to_collect = [],
                 is_processor_same_for_all_data = False):
         
         self.reset()
+        self.next_step_processor = default_choice
         self.visited.append(initial_id)
         self.is_processing_data = is_processing_data
         self.keys_to_collect = keys_to_collect
@@ -43,8 +48,8 @@ class Walker:
         self.data_processors = []
         self.keys_to_collect = []
 
-    def walk(self, possible_states: list):
-        next = choice(possible_states)
+    def walk(self, possible_states: list, **kwargs):
+        next = self.next_step_processor(possible_states, **kwargs)
         self.step += 1
         self.visited.append(next)
 
@@ -61,7 +66,3 @@ class Walker:
             return
         else:
             return
-
-if __name__ == "__main__":
-    walker = Walker(is_processing_data=True, data_processors=[1], keys_to_collect=["a", "b"], is_processor_same_for_all_data=True)
-    print(walker.__dict__)
