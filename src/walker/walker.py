@@ -13,7 +13,7 @@ class Walker:
                 is_processor_same_for_all_data = False):
         
         self.reset()
-        self.next_step_processor = default_choice
+        self.next_step_processor = next_step_processor
         self.visited.append(initial_id)
         self.is_processing_data = is_processing_data
         self.keys_to_collect = keys_to_collect

@@ -47,8 +47,11 @@ class Graph:
     def next(self, current: str):
         return self.nodes[current].next_ids
 
+    def get_keys(self):
+        return list(self.nodes.keys())
+
     def get_id(self, coordinates = None, size = 30):
-        if self.manual_hashing and type(coordinates) is np.ndarray or list:
+        if self.manual_hashing and type(coordinates) is np.ndarray or coordinates is list:
             id = self.id_generator(coordinates)
         else:
             id = ''.join(choice(string.ascii_uppercase + string.digits) for _ in range(size))
