@@ -11,6 +11,7 @@ class Graph:
     def __init__(self, id_generator = None):
         self.nodes = {}
         self.node_ids = []
+        self.no_of_nodes = 0
         if id_generator is not None:
             self.manual_hashing = True
             self.id_generator = id_generator
@@ -19,6 +20,7 @@ class Graph:
         return
 
     def add_node(self, node: Node, coordinates = None):
+        self.no_of_nodes += 1
         id = self.get_id(coordinates)       
         self.node_ids.append(id)
         self.nodes[id] = deepcopy(node)
@@ -26,6 +28,9 @@ class Graph:
 
     def remove_node(self, node_id: str):
         if node_id in self.node_ids:
+            self.no_of_nodes -= 1
+            self.node_ids.remove(node_id)
+            del self.nodes[node_id]
             for prev_id in self.nodes[node_id].prev_ids:
                 self.nodes[prev_id].remove_next_id(node_id)
             for next_id in self.nodes[node_id].next_ids:
