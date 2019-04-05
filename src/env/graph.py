@@ -36,7 +36,7 @@ class Graph:
             for next_id in self.nodes[node_id].next_ids:
                 self.nodes[next_id].remove_prev_id(node_id)
 
-    def add_connection(self, first: str, second:str, one_way = True):
+    def add_connection(self, first: str, second: str, one_way = True):
         if first not in self.node_ids or second not in self.node_ids:
             return
         if second not in self.nodes[first].next_ids:

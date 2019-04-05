@@ -13,6 +13,9 @@ from walker import Walker
 import numpy as np
 
 
+from IPython.display import display, clear_output 
+
+
 class MarkovChainModel:
 
     def __init__(self, **kwargs):
@@ -92,12 +95,16 @@ class MarkovChainModel:
                                 initial_id = self.chain.node_ids[i])
                 self.walkers.append(wlk)
 
-    def run(self, time):
+    def run(self, time, display_progress = True):
         self.times = np.arange(0, time + self.dt, self.dt)
 
         population_changes = {key: np.zeros(self.times.shape[0]) for key in self.chain.node_ids}
 
         iteration = 1
+        
+        if display_progress:
+            self._display_progress(self.times[0])
+
         for tt in self.times[1:]:
             for walker in self.walkers:
                 curr = walker.current_position()
@@ -121,6 +128,8 @@ class MarkovChainModel:
                 #print(population_changes)
 
             iteration += 1
+            if display_progress:
+                self._display_progress(tt)
 
         self.chain.update_node_populations(population_changes, self.times)
 
@@ -139,16 +148,26 @@ class MarkovChainModel:
 
     def write_population_data(self, stream = None, path = None):
         data = self.get_population_time_series(nodes = self.chain.node_ids)
-        data = np.append(data[0], data[1]).reshape(len(data[1]) + 1, data[0].shape[0])
+        data = (np.append(data[0], data[1])).reshape((len(data[1]) + 1, data[0].shape[0]))
         if type(path) is str:
             np.savetxt(path, data)
         elif stream is not None:
             stream.write(data)
 
+    def _display_progress(self, current_progress):
+        idx = np.where(self.times - current_progress >= 0)[0][0] + 1
+        perc = int(100. * idx / self.times.shape[0])
+        clear_output(wait = True)
+        prg = "["
+        prg += "".join(["=" for i in range(int(perc / 5))])
+        prg += "".join(["." for i in range(20 - int(perc / 5))])
+        prg += "".join("]")
+        display(prg + "       " + 'Progress: ' + str(perc) + "%")
+        #sys.stdout.flush(prg + "       " + 'Progress: ' + str(perc))
 
 
 if __name__ == "__main__":
-    model = MarkovChainModel(node_population = 10 * np.array([10, 20, 35, 45, 50]), dt = 1e-5)
+    model = MarkovChainModel(node_population = 10 * np.array([10, 20, 35, 45, 50]), dt = 1e-2)
 
     transition_matrix = [[0, 0, 0, 0, 0],\
                          [1, 0, 1, 1, 1],\
