@@ -101,28 +101,19 @@ class MarkovChainModel:
         for tt in self.times[1:]:
             for walker in self.walkers:
                 curr = walker.current_position()
-                tp = self.chain.nodes[curr].transition_probability
-                walker.next_step_processor.transition_probability = tp
+                walker.next_step_processor.transition_probability = \
+                                                        self.chain.nodes[curr].transition_probability
                 next_pos = self.chain.next(curr)
                 if len(next_pos) == 0:
                     walker.empty_step()
                     continue
-                #print(next_pos, curr)
-                #print(self.chain.nodes[curr].__dict__)
                 pmf = self.chain.get_node_probability_mass_function(curr)
-                #print(pmf, next_pos)
                 pmf = [pmf[pos] for pos in next_pos]
-                #print(pmf)
                 walker.walk(possible_states = next_pos, \
                             current_state = curr, \
                             probability_mass_function = pmf)
 
-                #print(pmf)
-
                 nxt = walker.current_position()
-
-                #print(curr, nxt)
-                #print(population_changes)
 
                 population_changes[curr][iteration] -= 1
                 population_changes[nxt][iteration] += 1
@@ -145,6 +136,15 @@ class MarkovChainModel:
 
             ret.append(self.chain.get_population_time_series(node_id = node_id, time = time))
         return self.times[1:], ret
+
+    def write_population_data(self, stream = None, path = None):
+        data = self.get_population_time_series(nodes = self.chain.node_ids)
+        data = np.append(data[0], data[1]).reshape(len(data[1]) + 1, data[0].shape[0])
+        if type(path) is str:
+            np.savetxt(path, data)
+        elif stream is not None:
+            stream.write(data)
+
 
 
 if __name__ == "__main__":
