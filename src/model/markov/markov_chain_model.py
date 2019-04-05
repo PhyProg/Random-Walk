@@ -4,10 +4,11 @@ sys.path.insert(0, "../../env")
 sys.path.insert(0, "../../walker")
 
 from chain import Chain
+from graph import Graph
 from node import Node
 
 from markov import Markov
-from light_walker import LightWalker
+from walker import Walker
 
 import numpy as np
 
@@ -18,11 +19,25 @@ class MarkovChainModel:
         self.chain = Chain()
         self.walkers = []
         
+        self.times = np.zeros(1)
         self.dt = 1e-7
         self.update_time_unit_(**kwargs)
 
         self.error = 1e-7
         self.update_error_(**kwargs)
+
+        pop = None
+        dat = None
+
+        try:
+            pop = kwargs['node_population']
+        except: KeyError
+
+        try:
+            dat = kwargs['node_data']
+        except: KeyError
+
+        self.add_nodes_(pop, dat, **kwargs)
 
     def update_time_unit_(self, **kwargs):
         if 'dt' in kwargs.keys():
@@ -38,17 +53,21 @@ class MarkovChainModel:
                 del kwargs['error']
             except: ValueError 
 
-    def add_nodes_(self, nodes_population, **kwargs):
+    def add_nodes_(self, nodes_population, nodes_data_dict = None, **kwargs):
         nodes_population = np.array(nodes_population)
 
+        if nodes_data_dict is None:
+            nodes_data_dict = [{} for i in range(nodes_population.shape[0])]
+
         for i in range(nodes_population.shape[0]):
-            node = Node(population = nodes_population[i])
-            self.chain.add_nodes(node)
+            node = Node(population = nodes_population[i], **nodes_data_dict[i])
+            self.chain.add_node(node)
 
         if 'transition_matrix' in kwargs.keys():
             transition_matrix = kwargs['transition_matrix']
         else:
-            transition_matrix = np.zeros((self.chain.no_of_nodes, self.chain.no_of_nodes), dtype = np.float65)
+            transition_matrix = np.zeros((self.chain.no_of_nodes, self.chain.no_of_nodes),\
+                                         dtype = np.float64)
 
         self.add_transition_probabilities_to_nodes_(transition_matrix)
         self.initialize_walkers_(nodes_population)
@@ -61,7 +80,91 @@ class MarkovChainModel:
                 if transition_matrix[i][j] > self.error:
                     self.chain.add_transition_probability(self.chain.node_ids[i], \
                                                         self.chain.node_ids[j],
-                                                        transition_matrix[i][j])
+                                                        transition_matrix[i][j] * self.dt)
+        self.chain.update_markov_model()
 
     def initialize_walkers_(self, population):
-        return
+        for i in range(self.chain.no_of_nodes):
+            trans_prob = self.chain.get_node_transition_probability(self.chain.node_ids[i])
+            next_step_processor = Markov(trans_prob)
+            for j in range(population[i]):
+                wlk = Walker(next_step_processor = next_step_processor,\
+                                initial_id = self.chain.node_ids[i])
+                self.walkers.append(wlk)
+
+    def run(self, time):
+        self.times = np.arange(0, time + self.dt, self.dt)
+
+        population_changes = {key: np.zeros(self.times.shape[0]) for key in self.chain.node_ids}
+
+        iteration = 1
+        for tt in self.times[1:]:
+            for walker in self.walkers:
+                curr = walker.current_position()
+                tp = self.chain.nodes[curr].transition_probability
+                walker.next_step_processor.transition_probability = tp
+                next_pos = self.chain.next(curr)
+                if len(next_pos) == 0:
+                    walker.empty_step()
+                    continue
+                #print(next_pos, curr)
+                #print(self.chain.nodes[curr].__dict__)
+                pmf = self.chain.get_node_probability_mass_function(curr)
+                #print(pmf, next_pos)
+                pmf = [pmf[pos] for pos in next_pos]
+                #print(pmf)
+                walker.walk(possible_states = next_pos, \
+                            current_state = curr, \
+                            probability_mass_function = pmf)
+
+                #print(pmf)
+
+                nxt = walker.current_position()
+
+                #print(curr, nxt)
+                #print(population_changes)
+
+                population_changes[curr][iteration] -= 1
+                population_changes[nxt][iteration] += 1
+
+                #print(population_changes)
+
+            iteration += 1
+
+        self.chain.update_node_populations(population_changes, self.times)
+
+    def get_population_time_series(self, time = -1, nodes = []):
+        ret = []
+        for node in nodes:
+            if node in self.chain.node_ids:
+                node_id = node
+            elif type(node) is int:
+                node_id = self.chain.node_ids[node]
+            else:
+                node_id = self.chain.node_ids[-1]
+
+            ret.append(self.chain.get_population_time_series(node_id = node_id, time = time))
+        return self.times[1:], ret
+
+
+if __name__ == "__main__":
+    model = MarkovChainModel(node_population = 10 * np.array([10, 20, 35, 45, 50]), dt = 1e-5)
+
+    transition_matrix = [[0, 0, 0, 0, 0],\
+                         [1, 0, 1, 1, 1],\
+                         [1, 1, 0, 1, 0],\
+                         [1, 0, 0, 0, 1],\
+                         [1, 1, 1, 1, 0]]
+
+    transition_matrix = np.array(transition_matrix, dtype = np.float) * 5
+
+    model.add_transition_probabilities_to_nodes_(transition_matrix)
+    #s = Chain()
+    model.run(time = 1)
+
+    ts, arr = model.get_population_time_series(nodes = [0, 1, 2, 3, 4])
+
+    import matplotlib.pyplot as plt
+    for ar in arr:
+        plt.plot(ts, ar)
+    plt.show()

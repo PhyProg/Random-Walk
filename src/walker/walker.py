@@ -53,6 +53,10 @@ class Walker:
         self.step += 1
         self.visited.append(next)
 
+    def empty_step(self):
+        self.step += 1
+        self.visited.append(self.visited[-1])
+
     def collect_data(self, node = None, data_dict = None):
         if node is not None:
             for key in self.keys_to_collect:

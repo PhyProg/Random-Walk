@@ -6,6 +6,8 @@ class Markov:
         self.transition_probability = transition_probability
 
     def __call__(self, possible_states: list, probability_mass_function = None, **kwargs):
+        #print(self.transition_probability)
+        #print(probability_mass_function)
         if probability_mass_function is None:
             probability_mass_function = np.ones(len(possible_states))
         rand = np.random.uniform(low = 0, high = 1)

@@ -1,4 +1,5 @@
 from graph import *
+from metric import Metric
 
 class MetricGraph(Graph):
 
@@ -23,3 +24,9 @@ class MetricGraph(Graph):
         for data in self.metric.metric_data():
             stream.write(default_startswith + "\t" + data + "\n")
         return
+
+if __name__ == "__main__":
+
+    m = Metric(lambda x: x, coordinate_origin = 0)
+    g = MetricGraph(m)
+    print(g.__dict__)
