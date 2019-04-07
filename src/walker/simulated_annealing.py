@@ -1,19 +1,29 @@
 import numpy as np
+import warnings
 
 class SimulatedAnnealing:
 
     def __init__(self, initial_temperature, temperature_decay = 0.9):
         self.temperature = initial_temperature
         self.tempereture_decay = temperature_decay
+        self.no_of_bad_moves = 0
 
     def update_temprature(self, delta_energy):
         if delta_energy > 0:
             self.temperature *= self.tempereture_decay
+            self.no_of_bad_moves += 1
 
     def __call__(self, possible_states: list, energies: np.ndarray, current_energy: float):
         delta_e = energies - current_energy
-        probability_factors = np.exp(delta_e / self.temperature)
-        probability_factors /= np.sum(probability_factors)
+        
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error')
+            try:
+                probability_factors = np.exp(delta_e / self.temperature)
+                probability_factors /= np.sum(probability_factors)
+            except RuntimeWarning:
+                return possible_states[np.argmin(delta_e)]
+
         rand = np.random.uniform(low = 0.0, high = 1.0)
         for i in range(probability_factors.shape[0]):
             if rand < probability_factors[i]:
@@ -22,12 +32,13 @@ class SimulatedAnnealing:
             else:
                 rand -= probability_factors[i]
 
+
 class ThermodynamicSimulatedAnnealing(SimulatedAnnealing):
     
     def __init__(self, initial_temperature, temperature_decay):
         self.entropy_changes = 0
         self.energy_changes = 0
-        super().__init__(initial_temperature, temperature_decay)
+        super(ThermodynamicSimulatedAnnealing, self).__init__(initial_temperature, temperature_decay)
 
     def update_thermodynamic_parameters(self, delta_energy):
         if delta_energy < 0:
@@ -70,3 +81,7 @@ class QuantumAnnealing:
             else:
                 rand -= probability_factors[i]
 
+if __name__ == "__main__":
+
+    annealing = SimulatedAnnealing(initial_temperature = 10)
+    print(annealing([1, 2, 3], np.array([1e1333, 1e3423, 1e22123]), 1e100))

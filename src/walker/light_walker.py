@@ -19,7 +19,7 @@ class LightWalker:
         self.terminated = False
         if initial_position is None:
             initial_position = np.zeros(self.dim, dtype = np.int64)
-        self.visited = np.zeros((self.max_no_of_steps, dim), dtype = np.int64)
+        self.visited = np.zeros((self.max_no_of_steps + 1, dim), dtype = np.float64)
         self.visited[0] = initial_position
         self.reset()
         for key in data_collection_keys:
@@ -38,6 +38,7 @@ class LightWalker:
     def walk(self, possible_states: list, **kwargs):
         if not self.terminated:
             next = self.next_step_processor(possible_states, **kwargs)
+            #print(next)
             self.step += 1
             self.visited[self.step] = np.array(next)
         if self.step >= self.max_no_of_steps:

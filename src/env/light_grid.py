@@ -7,7 +7,9 @@ class LightGrid:
 
         if dr is None:
             self.dr = np.ones(self.dim, dtype = np.int64)
-
+        else:
+            self.dr = dr
+            
         if bounded:
             if 'bounds' not in kwargs.keys():
                 raise AttributeError("If grid is bounded you need to provide bounds")

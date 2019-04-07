@@ -1,5 +1,4 @@
-import data_processor
-from data_processor import DataProcessor
+"""from data_processor import *
 
 from gradient_descent import GradientDescent
 
@@ -11,4 +10,4 @@ from simulated_annealing import SimulatedAnnealing, \
                                 ThermodynamicSimulatedAnnealing, \
                                 QuantumSimulatedAnnealing
 
-from walker import Walker
+from walker import Walker"""
