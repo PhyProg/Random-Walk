@@ -89,8 +89,10 @@ class LightGrid:
     def _is_array_in_list(self, my_array: np.ndarray, lst: list):
         return next((True for arr in lst if np.array_equal(arr, my_array)), False)
 
-    def _next(self, current: np.ndarray, is_out_of_wormhole = True):
+    def _next(self, current: np.ndarray, is_out_of_wormhole = True, dr = None):
         possible_pos = []
+        if type(dr) is np.ndarray:
+            self.dr = dr
         if str(current) in self.blackholes:
             return [current]
         if str(current) in self.wormholes.keys() and not is_out_of_wormhole:
