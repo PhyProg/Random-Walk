@@ -22,6 +22,7 @@ class LightWalker:
         self.visited = np.zeros((self.max_no_of_steps + 1, dim), dtype = np.float64)
         self.visited[0] = initial_position
         self.reset()
+        self.data_collection_keys = data_collection_keys
         for key in data_collection_keys:
             self.data[key] = []
 

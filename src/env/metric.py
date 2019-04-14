@@ -1,4 +1,5 @@
 from copy import deepcopy
+import numpy as np
 
 class Metric:
 
@@ -55,3 +56,20 @@ class Metric:
         yield "Name: " + str(self.name)
         yield "Description: " + str(self.description)
         yield "Coordinate Origin: " + str(self.coordinate_origin)
+
+class InnerProductL2:
+
+    def __init__(self):
+        pass
+
+    def check(self, a: np.ndarray, b:np.ndarray):
+        if len(a.shape) != 1 or len(b.shape) != 1:
+            return False
+        return a.shape[0] == b.shape[0]
+
+    def __call__(self, a: np.ndarray, b: np.ndarray):
+        if self.check(a, b):
+            return np.sum(a * b)
+        else:
+            print(a, b)
+            return np.nan
