@@ -3,6 +3,11 @@ import warnings
 
 class SimulatedAnnealing:
 
+    """
+    Simulated Annealing processor for next step, enabling walkers to walk to positions with 
+    higher energy.
+    """
+
     def __init__(self, initial_temperature, temperature_decay = 0.9):
         self.temperature = initial_temperature
         self.tempereture_decay = temperature_decay
@@ -35,6 +40,10 @@ class SimulatedAnnealing:
 
 class ThermodynamicSimulatedAnnealing(SimulatedAnnealing):
     
+    """
+    Modification of update_temperature function.
+    """
+
     def __init__(self, initial_temperature, temperature_decay):
         self.entropy_changes = 0
         self.energy_changes = 0
@@ -80,8 +89,3 @@ class QuantumAnnealing:
                 return possible_states[i]
             else:
                 rand -= probability_factors[i]
-
-if __name__ == "__main__":
-
-    annealing = SimulatedAnnealing(initial_temperature = 10)
-    print(annealing([1, 2, 3], np.array([1e1333, 1e3423, 1e22123]), 1e100))

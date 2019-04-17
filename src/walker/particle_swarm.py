@@ -6,7 +6,107 @@ from walker.light_walker import LightWalker
 from env.metric import InnerProductL2
 import numpy as np
 
-class ParticleSwarm:
+class SwarmIntelligenceProcessor:
+
+    """
+    Simple processor function that implements random motion with uniform velocity, i.e. associates
+    probability mass function to every position on grid according to cosine of angle between given
+    position and particle velocity.
+    """
+
+    def __init__(self, inner_product: callable):
+        self.inner_product = inner_product
+
+    def _choose(self, pmf : np.ndarray):
+        rand = np.random.uniform(low = 0., high = 1.)
+        for i in range(pmf.shape[0]):
+            if rand < pmf[i]:
+                return i
+            else:
+                rand -= pmf[i]
+        return pmf.shape[0] - 1
+
+
+    def __call__(self, positions: list, velocity: np.ndarray, return_index = False):
+        norm_vel = np.sqrt(self.inner_product(velocity, velocity))
+        norms_ = np.sqrt(list((self.inner_product(pos, pos) for pos in positions)))
+
+        pmf = [(self.inner_product(velocity, pos) / (norm_vel * norm_pos) + 1.) \
+                for pos, norm_pos in zip(positions, norms_)]
+
+        #print(pmf)
+
+        pmf = np.array(pmf) / np.sum(pmf)
+
+        #print(pmf)
+
+        ret = self._choose(pmf)
+
+        if not return_index:
+            ret = positions[ret]
+
+
+        return ret
+
+class ParticleSwarmProcessor:
+
+    """
+    Next step processor inspired by particle swarm algorithm, having global values accessible
+    to every PSP Obj, representing global minima of function on given grid/graph. 
+    """
+
+    global_optimal_value = np.inf
+    global_optimal_pos = None
+
+    def __init__(self, 
+                grid_dim, 
+                cognitive_learning_coef, 
+                social_learning_coef,
+                inner_product: callable):
+
+        ParticleSwarmProcessor.global_optimal_pos = 10 * np.random.uniform(grid_dim)
+        self.local_optimal_pos = 10 * np.random.uniform(grid_dim)
+        self.local_optimal_value = np.inf
+
+        self.cognitive_learning_coef = cognitive_learning_coef
+        self.social_learning_coef = social_learning_coef
+
+        self.processor = SwarmIntelligenceProcessor(inner_product)
+
+        self.velocity = np.random.uniform(grid_dim)
+
+    def update_optimal_values(self, position, value):
+        if value < ParticleSwarmProcessor.global_optimal_value:
+            ParticleSwarmProcessor.global_optimal_value = value
+            ParticleSwarmProcessor.global_optimal_pos = position
+            self.local_optimal_pos = position
+            self.local_optimal_value = value
+        elif value < self.local_optimal_value:
+            self.local_optimal_pos = position
+            self.local_optimal_value = value
+
+    def update_particle_velocity(self, position):
+        r1, r2 = np.random.uniform(size = 2)
+
+        self.velocity = self.cognitive_learning_coef * r1 * \
+            (self.local_optimal_pos - position) \
+            + self.social_learning_coef * r2 * \
+            (ParticleSwarmProcessor.global_optimal_pos - position)
+
+    def __call__(self, position, next_positions, velocity, energy, next_positions_energy):
+        self.update_particle_velocity(position)
+        next_index = self.processor(position, self.velocity)
+        self.update_optimal_values(next_positions[next_index, next_positions_energy[next_index]])
+        return next_positions[next_index]
+
+
+class ParticleSwarmM:
+
+    """
+    Dummy ugly model used as prototype...
+    """
+
+    #TODO: remove
 
     def __init__(self, \
                 grid_dim, \
@@ -82,38 +182,9 @@ class ParticleSwarm:
             (self.global_optimal_pos - self.walkers[index_of_walker].get_current_position())
 
         return self.walker_velocities[index_of_walker]
+    
 
-
-class SwarmIntelligenceProcessor:
-
-    def __init__(self, inner_product: callable):
-        self.inner_product = inner_product
-
-    def _choose(self, pmf : np.ndarray):
-        rand = np.random.uniform(low = 0., high = 1.)
-        for i in range(pmf.shape[0]):
-            if rand < pmf[i]:
-                return i
-            else:
-                rand -= pmf[i]
-        return pmf.shape[0] - 1
-
-
-    def __call__(self, positions: list, velocity: np.ndarray):
-        norm_vel = np.sqrt(self.inner_product(velocity, velocity))
-        norms_ = np.sqrt(list((self.inner_product(pos, pos) for pos in positions)))
-
-        pmf = [(self.inner_product(velocity, pos) / (norm_vel * norm_pos) + 1.) \
-                for pos, norm_pos in zip(positions, norms_)]
-
-        #print(pmf)
-
-        pmf = np.array(pmf) / np.sum(pmf)
-
-        #print(pmf)
-
-        return positions[self._choose(pmf)]
-
+    
 
 
 if __name__ == "__main__":
